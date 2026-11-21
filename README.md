@@ -18,14 +18,12 @@ hardened against spurious OOM kills.
 
 ---
 
-## RT hardware-breakpoint driver — kernel-side ABI compatibility
+## RT memory read/write driver support
 
-The RT driver (`suvhwvwrtnb`) is a closed binary. It was built against a
-different kernel struct layout, so it writes driver state to fixed offsets
-and builds `perf_event_attr` with fixed values. Rather than patching the
-binary, the kernel was adapted so those offsets and behaviours match what
-the driver expects. The fixes below were all derived from disassembly and
-live probing of the driver against this kernel — not from guesswork.
+This kernel supports an RT memory read/write driver that uses hardware
+breakpoints. The driver expects specific kernel struct layouts and
+behaviours, so the kernel was adapted to match. All changes are
+kernel-side.
 
 ### Struct layout
 
@@ -59,14 +57,8 @@ load order) and a hardcoded major gate silently stops translating.
 `0x03181352` is WRITE, `0x03181355` is GET_HITS, `0x03181356` is
 ADD / REMOVE, `0x03181354` is dead (`-EINVAL`).
 
-### Module signing
-
-`CONFIG_MODULE_SIG` is **off**. The driver is unsigned, so with signature
-enforcement on, `insmod` fails with "Required key not available".
-`CONFIG_MODVERSIONS` stays on.
-
 The driver itself is **not** included in this repository — it is
-third-party. Load your own `drv-c.ko` after flashing.
+third-party. Load your own driver module after flashing.
 
 ---
 
@@ -128,7 +120,7 @@ Full history is in [CHANGELOG.md](CHANGELOG.md). Build instructions are in
 4. Reboot. The kernel version is `4.19.157-perf+`.
 
 After flashing, install the ReSukiSu Manager APK (v4.2.0-rc3, 35171) for root
-access, and load your RT driver (`insmod drv-c.ko`) as usual.
+access, and load your RT driver module as usual.
 
 ---
 
@@ -165,7 +157,7 @@ the `LOCALVERSION` trap (`-perf`, not `-perf+`), and the packaging steps.
   source too. It is only used when `CONFIG_OPLUS_FEATURE_SENSOR_CRASH_MONITOR`
   is enabled, which it is not in this build — the build never touches it.
 - **The RT driver is not included.** It is third-party; bring your own
-  `drv-c.ko`. The kernel only provides the ABI it needs.
+  driver module. The kernel only provides the ABI it needs.
 - **Windows checkout: 3 files named `aux.*` are excluded.** Windows
   reserves the name `AUX` (a DOS device name), so `drivers/gpu/drm/nouveau/nvkm/subdev/i2c/aux.c`,
   `drivers/gpu/drm/nouveau/nvkm/subdev/i2c/aux.h` and
